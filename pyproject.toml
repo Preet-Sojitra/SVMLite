@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "SVMLite"
+name = "svmlite"
 version = "0.1.0"
 description = "A lightweight SVM implementation from scratch"
 authors = [{name = "Preet Sojitra", email = "preet.dev373@gmail.com"}]
