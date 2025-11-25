@@ -20,3 +20,40 @@ def linear_separable_data():
     )
     y = np.where(y == 0, -1, 1)  # Convert labels to -1 and 1
     return X, y
+
+
+@pytest.fixture
+def nonlinear_separable_data():
+    """Generate a non-linearly separable dataset (XOR-like pattern)."""
+    np.random.seed(42)
+    # Create XOR pattern
+    X = np.random.randn(200, 2)
+    y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0).astype(int)
+    y = np.where(y == 0, -1, 1)  # Convert to -1 and 1
+    return X, y
+
+
+@pytest.fixture
+def circular_separable_data():
+    """Generate circular/radial separable data (inner and outer circles)."""
+    np.random.seed(42)
+    n_samples = 200
+    # Inner circle
+    r_inner = np.random.uniform(0, 2, n_samples // 2)
+    theta_inner = np.random.uniform(0, 2 * np.pi, n_samples // 2)
+    X_inner = np.column_stack(
+        [r_inner * np.cos(theta_inner), r_inner * np.sin(theta_inner)]
+    )
+    y_inner = np.ones(n_samples // 2) * -1
+
+    # Outer circle
+    r_outer = np.random.uniform(3, 5, n_samples // 2)
+    theta_outer = np.random.uniform(0, 2 * np.pi, n_samples // 2)
+    X_outer = np.column_stack(
+        [r_outer * np.cos(theta_outer), r_outer * np.sin(theta_outer)]
+    )
+    y_outer = np.ones(n_samples // 2)
+
+    X = np.vstack([X_inner, X_outer])
+    y = np.hstack([y_inner, y_outer])
+    return X, y

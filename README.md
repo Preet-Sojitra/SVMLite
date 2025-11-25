@@ -6,14 +6,6 @@ This project is part of CS6375 Machine learning course at University of Texas at
 
 A lightweight Python library implementing Support  Vector Machines from scratch for educational and experimental use.
 
-# Features
-- Implemenation of primal form (hard margin and soft margin) of SVM Classification using Stochastic Gradient Descent (SGD). 
-
-# Modules Implemented from Scratch
-- SVM Classifier
-- Standard Scaler
-- Metric functions: Accuracy
-
 ## Installation
 
 ```bash
@@ -48,3 +40,14 @@ print("Predictions:", predictions)
 acc = accuracy_score(y, predictions)
 print("Accuracy:", acc)
 ```
+
+# Features
+- Implemenation of primal form (hard margin and soft margin) of SVM Classification using Stochastic Gradient Descent (SGD). 
+- QP (Quadratic Programming) based SVM implementation using cvxopt
+- Kernel Support: Linear, Polynomial, RBF kernel, Sigmoid kernel and Custom Kernel support
+
+# Modules Implemented from Scratch
+- SVM Classifier
+- Kernel Functions: Linear, Polynomial, RBF, Sigmoid
+- Standard Scaler
+- Metric functions: Accuracy
