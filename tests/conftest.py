@@ -66,3 +66,12 @@ def multiclass_data():
         n_samples=300, centers=3, n_features=2, cluster_std=1.5, random_state=42
     )
     return X, y
+
+
+@pytest.fixture
+def regression_data():
+    """Generate a simple regression dataset."""
+    np.random.seed(42)
+    X = np.random.rand(100, 1) * 10
+    y = 2.5 * X.flatten() + 1.0 + np.random.randn(100) * 0.5
+    return X, y

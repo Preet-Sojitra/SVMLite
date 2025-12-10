@@ -628,3 +628,147 @@ class SVCLite:
         self.alphas = self.alphas[sv_mask]
         self.support_vectors = X[sv_mask]
         self.support_vector_labels = y[sv_mask]
+
+
+class SVRLite:
+    """
+    Support Vector Regression using primal form with SGD.
+    """
+    def __init__(
+        self,
+        epsilon: float = 0.1,
+        C: float = 1.0,
+        learning_rate: float = 0.01,
+        n_iters: int = 1000,
+        batch_size: int = 32,
+    ):
+        """
+        Initialize the SVR model (Primal form with SGD).
+
+        Args:
+            epsilon (float, optional): Epsilon parameter in the epsilon-insensitive loss function. Defaults to 0.1.
+            C (float, optional): Regularization parameter. Defaults to 1.0.
+            learning_rate (float, optional): Learning rate for SGD. Defaults to 0.01.
+            n_iters (int, optional): Number of iterations for SGD. Defaults to 1000.
+            batch_size (int, optional): Mini-batch size for SGD. Defaults to 32.
+
+        Raises:
+            ValueError: If epsilon, C, learning_rate, n_iters, or batch_size are not positive.
+        """
+        if epsilon < 0:
+            raise ValueError("Epsilon must be non-negative.")
+        if C <= 0:
+            raise ValueError("Regularization parameter C must be positive.")
+        if learning_rate <= 0:
+            raise ValueError("Learning rate must be positive.")
+        if n_iters <= 0:
+            raise ValueError("Number of iterations must be positive.")
+        if batch_size <= 0:
+            raise ValueError("Batch size must be positive.")
+
+        self.epsilon = float(epsilon)
+        self.C = float(C)
+        self.learning_rate = float(learning_rate)
+        self.n_iters = int(n_iters)
+        self.batch_size = int(batch_size)
+
+        self.weights = None
+        self.bias = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        """
+        Fit the SVR model to the training data.
+
+        Args:
+            X (np.ndarray): Training data features.
+            y (np.ndarray): Training data targets.
+
+        Raises:
+            TypeError: If X or y are not numpy arrays.
+            ValueError: If the number of samples in X and y are not equal.
+        """
+        if not isinstance(X, np.ndarray) or not isinstance(y, np.ndarray):
+            raise TypeError("X and y must be numpy arrays.")
+
+        if len(X) != len(y):
+            raise ValueError("Number of samples in X and y must be equal.")
+
+        self._fit_primal(X, y)
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict the target values for the input data.
+
+        Args:
+            X (np.ndarray): Input data features.
+
+        Returns:
+            np.ndarray: Predicted target values.
+
+        Raises:
+            RuntimeError: If the model is not trained yet.
+        """
+        if self.weights is None or self.bias is None:
+            raise RuntimeError("Model is not trained yet. Please call 'fit' first.")
+        
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a numpy array.")
+
+        return np.dot(X, self.weights) + self.bias
+
+    def _fit_primal(self, X: np.ndarray, y: np.ndarray) -> None:
+        """
+        Fit the SVR model using the primal formulation with SGD.
+
+        Args:
+            X (np.ndarray): Training data features.
+            y (np.ndarray): Training data targets.
+        """
+        num_samples, num_features = X.shape
+        self.weights = np.zeros(num_features)
+        self.bias = 0.0
+
+        for i in range(self.n_iters):
+            # shuffle the data
+            indices = np.arange(num_samples)
+            np.random.shuffle(indices)
+            X_shuffled = X[indices]
+            y_shuffled = y[indices]
+
+            for start in range(0, num_samples, self.batch_size):
+                X_mini_batch = X_shuffled[start : start + self.batch_size]
+                y_mini_batch = y_shuffled[start : start + self.batch_size]
+
+                dJ_dw_batch = np.zeros_like(self.weights)
+                dJ_db_batch = 0.0
+
+                # loop over each sample in mini-batch
+                for idx, x_k in enumerate(X_mini_batch):
+                    y_k = y_mini_batch[idx]
+                    prediction = np.dot(x_k, self.weights) + self.bias
+                    diff = y_k - prediction
+                    
+                    # Epsilon-insensitive loss gradient
+                    # if |y - f(x)| <= epsilon, gradient is 0
+                    # if y - f(x) > epsilon => loss = y - f(x) - epsilon => grad_w = -x, grad_b = -1
+                    # if y - f(x) < -epsilon => loss = -(y - f(x)) - epsilon = f(x) - y - epsilon => grad_w = x, grad_b = 1
+                    
+                    if diff > self.epsilon:
+                        dJ_dw_batch += -x_k
+                        dJ_db_batch += -1.0
+                    elif diff < -self.epsilon:
+                        dJ_dw_batch += x_k
+                        dJ_db_batch += 1.0
+                    # else: gradient is 0
+
+                # perform update for this mini-batch            
+                current_batch_size = len(X_mini_batch)
+                loss_grad_w = dJ_dw_batch / current_batch_size
+                loss_grad_b = dJ_db_batch / current_batch_size
+
+                dJ_dw_total = self.weights + self.C * num_samples * loss_grad_w
+                dJ_db_total = self.C * num_samples * loss_grad_b
+
+                # update weights and bias
+                self.weights -= self.learning_rate * dJ_dw_total
+                self.bias -= self.learning_rate * dJ_db_total

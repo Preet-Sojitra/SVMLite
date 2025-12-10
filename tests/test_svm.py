@@ -2,10 +2,10 @@
 
 import numpy as np
 from svmlite.utils import StandardScalerLite
-from svmlite.svm import SVCLite
-from sklearn.svm import SVC
+from svmlite.svm import SVCLite, SVRLite
+from sklearn.svm import SVC, SVR
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, mean_squared_error
 
 
 class TestSVCLiteSGD:
@@ -517,3 +517,46 @@ class TestMulticlassSVM:
             accuracy_lite > 0.8
         ), f"SVCLite OVO accuracy {accuracy_lite} is too low"
         assert abs(accuracy_lite - accuracy_sklearn) < 0.1
+
+
+class TestSVRLiteSGD:
+    """Test SVRLite SGD implementation."""
+
+    def test_svrlite_sgd_fit_and_predict(self, regression_data):
+        """Test SVRLite SGD fit and predict on simple regression data."""
+        X, y = regression_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        
+        # Standardize
+        scaler = StandardScalerLite()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Train SVRLite SGD
+        svrlite_sgd = SVRLite(epsilon=0.1, C=1.0, learning_rate=0.01, n_iters=10000)
+        svrlite_sgd.fit(X_train_scaled, y_train)
+        
+        # Predict
+        predictions = svrlite_sgd.predict(X_test_scaled)
+        mse = mean_squared_error(y_test, predictions)
+        
+        print(f"SVRLite SGD MSE: {mse}")
+
+        # Train sklearn SVR
+        svr_sklearn = SVR(epsilon=0.1, C=1.0, max_iter=2000, kernel="linear")
+        svr_sklearn.fit(X_train_scaled, y_train)
+        predictions_sklearn = svr_sklearn.predict(X_test_scaled)
+        mse_sklearn = mean_squared_error(y_test, predictions_sklearn)
+        
+        print(f"Sklearn SVR MSE: {mse_sklearn}")
+
+        assert mse < 0.5, f"SVRLite SGD MSE {mse} is too high"
+        assert abs(mse - mse_sklearn) < 0.05 , f"SVRLite SGD MSE {mse} is too high"
+
+        # assert the parameters are the nearly same with some tolerance
+        np.testing.assert_allclose(svrlite_sgd.weights, svr_sklearn.coef_.flatten(), rtol=1e-03, atol=0.1)
+        np.testing.assert_allclose(svrlite_sgd.bias, svr_sklearn.intercept_.flatten(), rtol=1e-03, atol=0.1)
+        
+        
