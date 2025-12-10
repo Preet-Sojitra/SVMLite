@@ -45,6 +45,9 @@ print("Accuracy:", acc)
 - Implemenation of primal form (hard margin and soft margin) of SVM Classification using Stochastic Gradient Descent (SGD). 
 - QP (Quadratic Programming) based SVM implementation using cvxopt
 - Kernel Support: Linear, Polynomial, RBF kernel, Sigmoid kernel and Custom Kernel support
+- SMO (Sequential Minimal Optimization) algorithm for optimization (simplified heuristic for selecting alpha pairs)
+- Multiclass classification using One-vs-One (OvO) and One-vs-All (OvA) strategies
+
 
 # Modules Implemented from Scratch
 - SVM Classifier

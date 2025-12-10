@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-12-10
+
+### Added
+- Support for SMO (Sequential Minimal Optimization) algorithm (with simple heuristic for selecting alpha pairs)
+- Support for multiclass classification using One-vs-One (OvO) and One-vs-All (OvA) strategies
+
+### Changed
+- Updated SVCLite class `fit` and `predict` method to be dispathchers based on the selected solver (SGD or QP) and strategy (OvO or OvA)
+
+### Fixed
+- No bug fixes in this release
+
 ## [0.2.0] - 2025-11-24
 
 ### Added

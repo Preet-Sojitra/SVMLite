@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "svmlite"
-version = "0.2.0"
+version = "0.3.0"
 description = "A lightweight SVM implementation from scratch"
 authors = [{name = "Preet Sojitra", email = "preet.dev373@gmail.com"}]
 readme = "README.md"
