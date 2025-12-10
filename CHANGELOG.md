@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-12-10
+
+### Added
+- Support for Support Vector Regression (SVR) using Stochastic Gradient Descent (SGD)
+- Add GridSearchCV for hyperparameter tuning
+
+### Fixed
+- No bug fixes in this release
+
 ## [0.3.0] - 2025-12-10
 
 ### Added
