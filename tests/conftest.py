@@ -57,3 +57,12 @@ def circular_separable_data():
     X = np.vstack([X_inner, X_outer])
     y = np.hstack([y_inner, y_outer])
     return X, y
+
+
+@pytest.fixture
+def multiclass_data():
+    """Generate a multiclass dataset (3 classes)."""
+    X, y = make_blobs(
+        n_samples=300, centers=3, n_features=2, cluster_std=1.5, random_state=42
+    )
+    return X, y

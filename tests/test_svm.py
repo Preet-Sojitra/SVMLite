@@ -355,3 +355,165 @@ class TestSVCLiteKernels:
         assert (
             accuracy_lite > 0.65
         ), f"Custom polynomial kernel accuracy {accuracy_lite} is too low"
+
+
+class TestSVCLiteSMOSolver:
+    """Test SVCLite using the SMO solver."""
+
+    def test_smo_linear_kernel_accuracy(self, linear_separable_data):
+        """Test SMO solver with a linear kernel on linearly separable data."""
+        X, y = linear_separable_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        scaler = StandardScalerLite()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Train SVCLite with SMO solver
+        svm_lite = SVCLite(C=1.0, solver="SMO", kernel="linear")
+        svm_lite.fit(X_train_scaled, y_train)
+        predictions_lite = svm_lite.predict(X_test_scaled)
+        accuracy_lite = accuracy_score(y_test, predictions_lite)
+
+        # Train sklearn SVC
+        svm_sklearn = SVC(C=1.0, kernel="linear")
+        svm_sklearn.fit(X_train_scaled, y_train)
+        predictions_sklearn = svm_sklearn.predict(X_test_scaled)
+        accuracy_sklearn = accuracy_score(y_test, predictions_sklearn)
+
+        # The results should be very close as both use precise solvers
+        assert abs(accuracy_lite - accuracy_sklearn) < 0.05
+
+    def test_smo_rbf_kernel_accuracy(self, circular_separable_data):
+        """Test SMO solver with RBF kernel on non-linearly separable data."""
+        X, y = circular_separable_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        scaler = StandardScalerLite()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Train SVCLite with RBF kernel
+        svm_lite = SVCLite(C=1.0, solver="SMO", kernel="rbf", gamma=0.5)
+        svm_lite.fit(X_train_scaled, y_train)
+        predictions_lite = svm_lite.predict(X_test_scaled)
+        accuracy_lite = accuracy_score(y_test, predictions_lite)
+
+        # Train sklearn SVC with RBF kernel
+        svm_sklearn = SVC(C=1.0, kernel="rbf", gamma=0.5)
+        svm_sklearn.fit(X_train_scaled, y_train)
+        predictions_sklearn = svm_sklearn.predict(X_test_scaled)
+        accuracy_sklearn = accuracy_score(y_test, predictions_sklearn)
+
+        print(
+            f"\nRBF Kernel (SMO) - SVCLite accuracy: {accuracy_lite:.3f}, sklearn accuracy: {accuracy_sklearn:.3f}"
+        )
+
+        # Both should achieve reasonable accuracy on non-linear data
+        assert (
+            accuracy_lite > 0.7
+        ), f"SVCLite RBF kernel (SMO) accuracy {accuracy_lite} is too low"
+        assert abs(accuracy_lite - accuracy_sklearn) < 0.1
+
+    def test_smo_polynomial_kernel_accuracy(self, circular_separable_data):
+        """Test SMO solver with polynomial kernel on non-linearly separable data."""
+        X, y = circular_separable_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        scaler = StandardScalerLite()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Train SVCLite with polynomial kernel
+        svm_lite = SVCLite(C=1.0, solver="SMO", kernel="polynomial", degree=3, coef0=1)
+        svm_lite.fit(X_train_scaled, y_train)
+        predictions_lite = svm_lite.predict(X_test_scaled)
+        accuracy_lite = accuracy_score(y_test, predictions_lite)
+
+        # Train sklearn SVC with polynomial kernel
+        svm_sklearn = SVC(C=1.0, kernel="poly", degree=3, coef0=1)
+        svm_sklearn.fit(X_train_scaled, y_train)
+        predictions_sklearn = svm_sklearn.predict(X_test_scaled)
+        accuracy_sklearn = accuracy_score(y_test, predictions_sklearn)
+
+        print(
+            f"\nPolynomial Kernel (SMO) - SVCLite accuracy: {accuracy_lite:.3f}, sklearn accuracy: {accuracy_sklearn:.3f}"
+        )
+
+        assert (
+            accuracy_lite > 0.65
+        ), f"SVCLite polynomial kernel (SMO) accuracy {accuracy_lite} is too low"
+        assert abs(accuracy_lite - accuracy_sklearn) < 0.15
+
+
+class TestMulticlassSVM:
+    """Test SVCLite multiclass strategies (OVA and OVO)."""
+
+    def test_ova_accuracy(self, multiclass_data):
+        """Test One-vs-All strategy on multiclass data."""
+        X, y = multiclass_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        scaler = StandardScalerLite()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Train SVCLite with OVA strategy
+        svm_lite = SVCLite(
+            C=1.0, solver="SGD", kernel="linear", multiclass_strategy="ova"
+        )
+        svm_lite.fit(X_train_scaled, y_train, n_iters=1000)
+        predictions_lite = svm_lite.predict(X_test_scaled)
+        accuracy_lite = accuracy_score(y_test, predictions_lite)
+
+        # Train sklearn SVC (default is ovo, but we can compare accuracy)
+        svm_sklearn = SVC(C=1.0, kernel="linear", decision_function_shape="ovr")
+        svm_sklearn.fit(X_train_scaled, y_train)
+        predictions_sklearn = svm_sklearn.predict(X_test_scaled)
+        accuracy_sklearn = accuracy_score(y_test, predictions_sklearn)
+
+        print(
+            f"\nOVA Strategy - SVCLite accuracy: {accuracy_lite:.3f}, sklearn accuracy: {accuracy_sklearn:.3f}"
+        )
+
+        assert (
+            accuracy_lite > 0.8
+        ), f"SVCLite OVA accuracy {accuracy_lite} is too low"
+        assert abs(accuracy_lite - accuracy_sklearn) < 0.1
+
+    def test_ovo_accuracy(self, multiclass_data):
+        """Test One-vs-One strategy on multiclass data."""
+        X, y = multiclass_data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        scaler = StandardScalerLite()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Train SVCLite with OVO strategy
+        svm_lite = SVCLite(
+            C=1.0, solver="SGD", kernel="linear", multiclass_strategy="ovo"
+        )
+        svm_lite.fit(X_train_scaled, y_train, n_iters=1000)
+        predictions_lite = svm_lite.predict(X_test_scaled)
+        accuracy_lite = accuracy_score(y_test, predictions_lite)
+
+        # Train sklearn SVC (default is ovo)
+        svm_sklearn = SVC(C=1.0, kernel="linear", decision_function_shape="ovo")
+        svm_sklearn.fit(X_train_scaled, y_train)
+        predictions_sklearn = svm_sklearn.predict(X_test_scaled)
+        accuracy_sklearn = accuracy_score(y_test, predictions_sklearn)
+
+        print(
+            f"\nOVO Strategy - SVCLite accuracy: {accuracy_lite:.3f}, sklearn accuracy: {accuracy_sklearn:.3f}"
+        )
+
+        assert (
+            accuracy_lite > 0.8
+        ), f"SVCLite OVO accuracy {accuracy_lite} is too low"
+        assert abs(accuracy_lite - accuracy_sklearn) < 0.1
