@@ -43,30 +43,9 @@ class SVCLite:
         self.multiclass_strategy = multiclass_strategy
 
         # ---- Kernel setup ----
+        self.kernel_name = kernel
         self.kernel_params = kwargs
-        self._kernel_map = {
-            "linear": kernels.linear_kernel,
-            "rbf": kernels.rbf_kernel,
-            "polynomial": kernels.polynomial_kernel,
-            "sigmoid": kernels.sigmoid_kernel,
-        }
-        if isinstance(kernel, str):
-            # user provided kernel name
-            if kernel not in self._kernel_map:
-                raise ValueError(f"Kernel '{kernel}' is not supported.")
-            self.kernel_name = kernel
-            if kernel == "linear":
-                self.kernel = self._kernel_map[kernel]
-            else:
-                self.kernel = partial(self._kernel_map[kernel], **self.kernel_params)
-        elif callable(kernel):
-            # user provided custom kernel function
-            self.kernel_name = "custom"
-            # we cannot use pre-vectorized kernel gram matrix in dual form
-            # we store the function itself
-            self.kernel = kernel
-        else:
-            raise TypeError("Kernel must be either a string or a callable function.")
+        self._configure_kernel()
 
         # ---- State Variables ---
         # Primal form variables (for "sgd" solver)
@@ -84,6 +63,53 @@ class SVCLite:
         self.classes_ = None # holds the unique class labels
         # for ova it will be list of K models, indexed by class label. For ovo it will be tuple ((class_i, class_j), model)
         self._binary_classifiers = []
+
+    def _configure_kernel(self):
+        """Helper to map kernel string to callable"""
+        self._kernel_map = {
+            "linear": kernels.linear_kernel,
+            "rbf": kernels.rbf_kernel,
+            "polynomial": kernels.polynomial_kernel,
+            "sigmoid": kernels.sigmoid_kernel,
+        }
+        if self.kernel_name in self._kernel_map:
+            if self.kernel_name == "linear":
+                self.kernel = self._kernel_map[self.kernel_name]
+            else:
+                # use partial to bind kwargs
+                self.kernel = partial(self._kernel_map[self.kernel_name], **self.kernel_params)
+        else:
+            # handle custom callable. if kernel is not a string, it should be a callable
+            if not callable(self.kernel_name):
+                raise ValueError("Kernel must be either a string or a callable function.")
+            self.kernel = self.kernel_name
+
+    def set_params(self, **params):
+        """Set the parameters of the model."""
+        # Separate core parameters from potential kernel parameters
+        core_params = {"C", "solver", "kernel", "multiclass_strategy"}
+        
+        should_reconfigure = False
+        
+        for key, value in params.items():
+            # Update the attribute on the instance
+            setattr(self, key, value)
+            
+            # If it's the kernel name, update kernel_name and flag for reconfig
+            if key == "kernel":
+                self.kernel_name = value
+                should_reconfigure = True
+            
+            # If it's not a core param, assume it's a kernel param
+            elif key not in core_params:
+                self.kernel_params[key] = value
+                should_reconfigure = True
+                
+        # If we updated kernel params or changed the kernel, reconfigure
+        if should_reconfigure:
+            self._configure_kernel()
+            
+        return self
 
     # =======================================================
     # ===== Public methods for fitting and prediction =======

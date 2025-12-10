@@ -2,7 +2,7 @@
 
 import pytest
 import numpy as np
-from sklearn.datasets import make_blobs
+from sklearn.datasets import make_blobs, make_classification
 
 
 @pytest.fixture
@@ -75,3 +75,18 @@ def regression_data():
     X = np.random.rand(100, 1) * 10
     y = 2.5 * X.flatten() + 1.0 + np.random.randn(100) * 0.5
     return X, y
+
+@pytest.fixture
+def data():
+    """Generate synthetic classification data."""
+    X, y = make_classification(
+        n_samples=100,
+        n_features=4,
+        n_informative=2,
+        n_redundant=0,
+        random_state=42,
+        n_classes=2,
+    )
+    y_svm = np.where(y == 0, -1, 1)
+    return X, y_svm
+
