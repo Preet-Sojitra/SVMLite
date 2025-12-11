@@ -1,7 +1,5 @@
 # SVMLite
 
-> Work in Progress
-
 This project is part of CS6375 Machine learning course at University of Texas at Dallas.
 
 A lightweight Python library implementing Support  Vector Machines from scratch for educational and experimental use.
@@ -47,10 +45,5 @@ print("Accuracy:", acc)
 - Kernel Support: Linear, Polynomial, RBF kernel, Sigmoid kernel and Custom Kernel support
 - SMO (Sequential Minimal Optimization) algorithm for optimization (simplified heuristic for selecting alpha pairs)
 - Multiclass classification using One-vs-One (OvO) and One-vs-All (OvA) strategies
-
-
-# Modules Implemented from Scratch
-- SVM Classifier
-- Kernel Functions: Linear, Polynomial, RBF, Sigmoid
-- Standard Scaler
-- Metric functions: Accuracy
+- Grid Search for hyperparameter tuning
+- Cross Validation for model selection
